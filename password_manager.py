@@ -1,31 +1,17 @@
 import json, hashlib, getpass, os, pyperclip, sys # Importing the required modules.
 import tkinter as tk # Importing tkinter for GUI.
 from tkinter import messagebox
+from texts import texts
+from colors import colors
 
 from cryptography.fernet import Fernet # Importing Fernet from cryptography.fernet for encryption and decryption.
 
 
-# json is a library for encoding and decoding JSON (JavaScript Object Notation) data, commonly used for data serialization and interchange.
-
-# hashlib is a library that provides secure hash functions, including SHA-256, for creating hash values from data, often used for password hashing and data integrity verification. You can check this tutorial on how to use it.
-
-# getpass: A library for safely and interactively entering sensitive information like passwords without displaying the input on the screen. Similar to the way the Linux terminals are.
-
-# os: A library for interacting with the operating system, allowing you to perform tasks like file and directory manipulation.
-
-
-# pyperclip: A library for clipboard operations, enabling you to programmatically copy and paste text to and from the clipboard in a platform-independent way.
-
-# sys: This module is a built-in Python module that provides access to various system-specific parameters and functions.
-
-# cryptography.fernet: Part of the cryptography library, it provides the Fernet symmetric-key encryption method for securely encrypting and decrypting data. You can check this tutorial for more info.
-# Function for Hashing the Master Password.
 def hash_password(password):
    sha256 = hashlib.sha256()
    sha256.update(password.encode())
    return sha256.hexdigest()
 
-print(hash_password("password"));
 
 # Generate a secret key. This should be done only once as the same key is used for encryption and decryption.
 def generate_key():
@@ -58,6 +44,7 @@ def register(username, master_password):
            json.dump(user_data, file)
            print("\n[+] Registration complete!!\n")
 
+
 # Function to login.
 def login(center_frame, username, entered_password,texts):
     try:
@@ -77,6 +64,8 @@ def login(center_frame, username, entered_password,texts):
     except ValueError as err:
         print(f"Login Failed: {err}")
         raise
+
+
 # Function to view saved websites.
 def view_websites():
    try:
@@ -91,20 +80,6 @@ def view_websites():
    except FileNotFoundError:
        print("\n[-] You have not saved any passwords!\n")
 
-# Load or generate the encryption key.
-key_filename = 'encryption_key.key'
-# Check if the key already exists.
-if os.path.exists(key_filename):
-   # Load the key if it already exists.
-   with open(key_filename, 'rb') as key_file:
-       key = key_file.read()
-else:
-   # Generate the key if it does not exist.
-   key = generate_key()
-   with open(key_filename, 'wb') as key_file:
-       key_file.write(key)
-# Initialize the cipher.xs
-cipher = initialize_cipher(key)
 
 
 # Function to add (save password).
@@ -130,6 +105,7 @@ def add_password(website, password):
    with open('passwords.json', 'w') as file:
        # Indent the json data for readability.
        json.dump(data, file, indent=4)
+
 
 # Function to retrieve a saved password.
 def get_password(website):
@@ -157,6 +133,7 @@ def remove_buttons(buttons):
     for button in buttons:
         button.grid_forget()
     
+
 # Function to handle the register choice
 def handle_click(context, center_frame, texts):
     print("USer clicked button:", context)
@@ -170,12 +147,13 @@ def handle_click(context, center_frame, texts):
             show_view(center_frame, texts, texts.register)
         elif context == texts.logged:
             show_view(center_frame, texts, texts.logged)
-        elif context == texts.welcome:
-            show_view(center_frame, texts, texts.welcome)
+        elif context == texts.welcome_view:
+            show_view(center_frame, texts, texts.welcome_view)
         elif context == texts.add_password:
             show_view(center_frame, texts, texts.add_password)
-        elif context == texts.getpassword:
-            show_view(center_frame, texts, texts.getpassword)
+        elif context == texts.get_password:
+            show_view(center_frame, texts, texts.get_password)
+
     # Rest of the code
     pass
 
@@ -238,20 +216,24 @@ def handle_submit(center_frame, entry1, entry2, context, texts):
                 show_view(center_frame, texts, texts.logged)
     elif context == texts.get_password:
         website = entry1.get()
-        password = get_password(website)
-        if password:
-            pyperclip.copy(password)
-            messagebox.showinfo(texts.title, "Password copied to clipboard!")
-        else:
-            messagebox.showerror(texts.title, "No password found for the website!")            
+        try:
+            password = get_password(website)
+            if password:
+                pyperclip.copy(password)
+                messagebox.showinfo(texts.title, "Password copied to clipboard!")
+            else:
+                messagebox.showerror(texts.title, "No password found for the website!")
+        except Exception:
+            messagebox.showerror(texts.title, "An error occurred while getting password!")
 
 
 # Function to handle the back button click
 def handle_back(center_frame, texts):
     # Add your code here to handle the back button click
     remove_widgets(center_frame)
-
     show_view(center_frame, texts, texts.welcome)
+
+
 def remove_widgets(frame):
     # Remove all widgets from the frame
     for widget in frame.winfo_children():
@@ -264,23 +246,27 @@ def show_view(center_frame, texts, view):
     if view == texts.welcome_view:
         buttons = []
         # Welcome View
-        title = tk.Label(center_frame, text=texts.welcome, bg="#d3d3d3")
-        title.grid(row=0, column=0, padx=10, pady=5)
-        login_button = tk.Button(center_frame, text=texts.login, height=1, width=10)
-        login_button.grid(row=1, column=0, padx=10, pady=10)
+        title = tk.Label(center_frame, text=texts.welcome, bg=colors.BLACK, fg=colors.GREEN)
+        title.grid(row=0, column=0, padx=10, pady=10)
+        login_button = tk.Button(center_frame, text=texts.login, height=2, width=10, bg=colors.BLACK, fg=colors.BLACK, cursor="hand2")
+        login_button.grid(row=1, column=0)        
         buttons.append(login_button)
 
         file = 'user_data.json'
         # Register button
         if not (os.path.exists(file) and os.path.getsize(file) != 0):
             # Show the register button only if the user has not registered
-            register_button = tk.Button(center_frame, text=texts.register, height=1, width=10)
-            register_button.grid(row=2, column=0, padx=10, pady=10)
+            register_button = tk.Button(center_frame, text=texts.register, height=2, width=10, bg=colors.GREEN, cursor="hand2")
+            register_button.grid(row=2, column=0,padx=10, pady=5)
             buttons.append(register_button)
-            
-         # Quit button
-        quit_button = tk.Button(center_frame, text=texts.quit, height=1, width=10)
-        quit_button.grid(row=3, column=0, padx=10, pady=10)
+            # Quit button
+            quit_button = tk.Button(center_frame, text=texts.quit, height=2, width=10, bg=colors.GREEN, cursor="hand2", foreground=colors.RED)
+            quit_button.grid(row=3, column=0, padx=10, pady=5)
+        else:
+            # Quit button
+            quit_button = tk.Button(center_frame, text=texts.quit, height=2, width=10, bg=colors.BLACK, cursor="hand2", )
+            quit_button.grid(row=2, column=0, padx=10, pady=5)
+
         buttons.append(quit_button)
         # Bind the buttons to their respective functions once being loaded
         for button in buttons:
@@ -292,48 +278,53 @@ def show_view(center_frame, texts, view):
         remove_widgets(center_frame)
 
         if view == texts.login:
-            title = tk.Label(center_frame, text=texts.login, bg="#d3d3d3")
+            title = tk.Label(center_frame, text=texts.login, bg=colors.BLACK, fg=colors.GREEN)
         else:
             # Register View
-            title = tk.Label(center_frame, text=texts.register, bg="#d3d3d3")
+            title = tk.Label(center_frame, text=texts.register, bg=colors.BLACK, fg=colors.GREEN)
 
-        title.grid(row=0, column=0, padx=10, pady=5)
+        title.grid(row=0, column=0, padx=10, pady=10)
         #Username input
-        username_label = tk.Label(center_frame, text=texts.username, bg="#d3d3d3")
+        username_label = tk.Label(center_frame, text=texts.username, bg=colors.BLACK, fg=colors.GREEN)
         username_label.grid(row=2, column=0, padx=10, pady=5)
-        username_entry = tk.Entry(center_frame)
+        username_entry = tk.Entry(center_frame, relief="solid", bg=colors.BLACK, fg=colors.GREEN, border=1)
         username_entry.grid(row=2, column=1, padx=10, pady=5)
          
         #Password input
-        password_label = tk.Label(center_frame, text=texts.password, bg="#d3d3d3")
+        password_label = tk.Label(center_frame, text=texts.password, bg=colors.BLACK, fg=colors.GREEN, border=1)
         password_label.grid(row=3, column=0, padx=10, pady=5)
-        password_entry = tk.Entry(center_frame)
+        password_entry = tk.Entry(center_frame, show="•",  bg=colors.BLACK, fg=colors.GREEN, border=1, relief="solid")
         password_entry.grid(row=3, column=1, padx=10, pady=5)
+
     
         # Create the submit button
-        submit_button = tk.Button(center_frame, text=texts.submit, command=lambda: handle_submit(center_frame, username_entry, password_entry, view ,texts))
+        submit_button = tk.Button(center_frame, text=texts.submit,height=2, width=10, command=lambda: handle_submit(center_frame, username_entry, password_entry, view ,texts), cursor="hand2")
         submit_button.grid(row=4, column=0, columnspan=2, padx=10, pady=5)
     
         # Quit button
-        quit_button = tk.Button(center_frame, text=texts.quit, command=lambda:handle_click( texts.quit, center_frame, texts), height=1, width=10)
-        quit_button.grid(row=5, column=0, padx=10, pady=10)
+        quit_button = tk.Button(center_frame, text=texts.quit, height=2, width=10,command=lambda:handle_click( texts.quit, center_frame, texts), cursor="hand2")
+        quit_button.grid(row=5, column=0)
+
+        # Back button  / Show welcome view
+        back_button = tk.Button(center_frame, text=texts.back,height=2, width=10, command=lambda: handle_click(texts.welcome_view, center_frame, texts), cursor="hand2")
+        back_button.grid(row=5, column=1)
 
 
     elif view == texts.logged:
         # Logged View
         # Remove all old widgets from the frame
         remove_widgets(center_frame)
-        title = tk.Label(center_frame, text=texts.welcome_back + "\n" + texts.instructions, bg="#d3d3d3")
+        title = tk.Label(center_frame, text=texts.welcome_back + "\n" + texts.instructions, bg=colors.BLACK, fg=colors.GREEN)
         title.grid(row=0, column=0, padx=10, pady=5)
         # Add Password button
-        add_password_button = tk.Button(center_frame, text=texts.add_password,command=lambda: handle_click(texts.add_password,center_frame, texts), height=1, width=10)
-        add_password_button.grid(row=1, column=0, padx=10, pady=10)
+        add_password_button = tk.Button(center_frame, text=texts.add_password,command=lambda: handle_click(texts.add_password,center_frame, texts), height=2, width=10, cursor="hand2")
+        add_password_button.grid(row=1, column=0)
         # Get Password button
-        get_password_button = tk.Button(center_frame, text=texts.get_password,command=lambda: handle_click(texts.get_password,center_frame, texts), height=1, width=10)
-        get_password_button.grid(row=2, column=0, padx=10, pady=10)
+        get_password_button = tk.Button(center_frame, text=texts.get_password,command=lambda: handle_click(texts.get_password,center_frame, texts), height=2, width=10, cursor="hand2")
+        get_password_button.grid(row=2, column=0)
         # Quit button
-        quit_button = tk.Button(center_frame, text=texts.quit, height=1, width=10)
-        quit_button.grid(row=3, column=0, padx=10, pady=10)
+        quit_button = tk.Button(center_frame, text=texts.quit, height=2, width=10, cursor="hand2")
+        quit_button.grid(row=3, column=0)
 
         # Save all buttons in a list
         buttons = [add_password_button, get_password_button, quit_button]
@@ -346,64 +337,72 @@ def show_view(center_frame, texts, view):
         title = tk.Label(center_frame, text=texts.add_password, bg="#d3d3d3")
         title.grid(row=0, column=0, padx=10, pady=5)
         # Website input
-        website_label = tk.Label(center_frame, text=texts.website, bg="#d3d3d3")
+        website_label = tk.Label(center_frame, text=texts.website, bg=colors.BLACK, fg=colors.GREEN)
         website_label.grid(row=1, column=0, padx=10, pady=5)
         website_entry = tk.Entry(center_frame)
         website_entry.grid(row=1, column=1, padx=10, pady=5)
         # Password input
         password_label = tk.Label(center_frame, text=texts.password, bg="#d3d3d3")
         password_label.grid(row=2, column=0, padx=10, pady=5)
-        password_entry = tk.Entry(center_frame)
+        password_entry = tk.Entry(center_frame, show="•")
         password_entry.grid(row=2, column=1, padx=10, pady=5)
+
+        # Confirm Password input
+        confirm_password_label = tk.Label(center_frame, text="Confirm Password", bg="#d3d3d3")
+        confirm_password_label.grid(row=3, column=0, padx=10, pady=5)
+        confirm_password_entry = tk.Entry(center_frame, show="•")
+        confirm_password_entry.grid(row=3, column=1, padx=10, pady=5)
+        
         # Create the submit button
         submit_button = tk.Button(center_frame, text=texts.submit, command=lambda: handle_submit(center_frame, website_entry, password_entry, texts.add_password, texts))
-        submit_button.grid(row=3, column=0, columnspan=2, padx=10, pady=5)
-        # Quit button
-        quit_button = tk.Button(center_frame, text=texts.quit, height=1, width=10)
-        quit_button.grid(row=4, column=0, padx=10, pady=10)
-        # Add Password View
+        submit_button.grid(row=4, column=1, columnspan=2, padx=10, pady=5)
 
+        back_button = tk.Button(center_frame, text=texts.back, command=lambda: handle_click(texts.logged, center_frame, texts), height=2, width=10)
+        back_button.grid(row=4, column=0, padx=10, pady=10)
+       
+
+    # get password view
+    elif view == texts.get_password:
+        title = tk.Label(center_frame, text=texts.get_password, bg="#d3d3d3")
+        title.grid(row=0, column=0, padx=10, pady=5)
+        # Website input
+        website_label = tk.Label(center_frame, text=texts.website, bg="#d3d3d3")
+        website_label.grid(row=1, column=0, padx=10, pady=5)
+        website_entry = tk.Entry(center_frame)
+        website_entry.grid(row=1, column=1, padx=10, pady=5)
+        # Create the submit button
+        submit_button = tk.Button(center_frame, text=texts.submit, command=lambda: handle_submit(center_frame, website_entry, None, texts.get_password, texts))
+        submit_button.grid(row=2, column=0, columnspan=2, padx=10, pady=5)
+        # back button/ show logged view
+        back_button = tk.Button(center_frame, text=texts.back, command=lambda: handle_click(texts.logged, center_frame, texts), height=1, width=10)
+        back_button.grid(row=3, column=0, padx=10, pady=10)
     # Center the elements vertically and horizontally within the frame
     center_frame.grid_columnconfigure(0, weight=1)
-    center_frame.grid_rowconfigure(0, weight=1)
+    center_frame.grid_rowconfigure(1, weight=1)
+# Generate a secret key
+# Load or generate the encryption key.
+key_filename = 'encryption_key.key'
+# Check if the key already exists.
+if os.path.exists(key_filename):
+   # Load the key if it already exists.
+   with open(key_filename, 'rb') as key_file:
+       key = key_file.read()
+else:
+   # Generate the key if it does not exist.
+   key = generate_key()
+   with open(key_filename, 'wb') as key_file:
+       key_file.write(key)
 
-    
-# Initialize the user choice to None
-
-# Infinite loop to keep the program running until the user chooses to quit.
-        
-
-class Texts:
-    def __init__(self, welcome, welcome_view ,welcome_back, title, username, password ,website,login, register, instructions, signature, add_password, get_password, submit, logged, quit):
-        self.welcome = welcome
-        self.welcome_view = welcome_view
-        self.welcome_back = welcome_back
-        self.title = title
-        self.username = username
-        self.password = password
-        self.website = website
-        self.login = login
-        self.register = register
-        self.instructions = instructions
-        self.signature = signature
-        self.add_password = add_password
-        self.get_password = get_password
-        self.submit = submit
-        self.logged = logged
-        self.quit = quit
-
-
-texts = Texts("Welcome to Password Manager, what do you want to do?" , "Welcome" , "Welcome back !", "Password Manager","Username", "Password", "Website", "Login", "Register" ,'''To add password fill all the fields and press "Add Password"
-To view password, enter Account Name and press "Get Password"''', "Developed by André Despouys", "Add Password", "Get Password", "Submit", "Logged", "Quit")
-
+# Initialize the cipher.xs
+cipher = initialize_cipher(key)
 
 # GUI
 print("Opening Password Manager...")
 window = tk.Tk()
 window.title("Password Manager")
-window.configure(bg="orange")
+window.configure(bg="orange", width=500, height=600)
 window.resizable(True, True)
-center_frame = tk.Frame(window, bg="#d3d3d3")
+center_frame = tk.Frame(window, bg=colors.BLACK, width=500, height=600)
 # Center the frame and make it adapt to the window's dimensions
 center_frame.pack(fill="both", expand=True)
 
