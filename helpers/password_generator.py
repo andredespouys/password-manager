@@ -2,9 +2,9 @@ import random
 import array
 import  pyperclip # Importing the required modules.
 from tkinter import messagebox
-
-
 from helpers.useful_variables import *
+
+
 def copyPasswordToClipboard(password):
     try:
         pyperclip.copy(password)

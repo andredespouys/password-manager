@@ -82,50 +82,60 @@ def view_websites():
 
 
 # Function to add (save password).
-def add_password(website, username, password):
-   # Check if passwords.json exists
-   if not os.path.exists('passwords.json'):
-       # If passwords.json doesn't exist, initialize it with an empty list
-       data = []
-   else:
-       # Load existing data from passwords.json
-       try:
-           with open('passwords.json', 'r') as file:
-               data = json.load(file)
-       except json.JSONDecodeError:
-           # Handle the case where passwords.json is empty or invalid JSON.
-           data = []
-   # Encrypt the password
-   encrypted_password = encrypt_password(cipher, password)
-   # Create a dictionary to store the website and password
-   password_entry = {'website': website, 'username':username,  'password': encrypted_password}
-   data.append(password_entry)
-   # Save the updated list back to passwords.json
-   with open('passwords.json', 'w') as file:
-       # Indent the json data for readability.
-       json.dump(data, file, indent=4)
+def add_password(website, username, password, confirm_password):
+    try:
+        # Check if the password and confirm password are the same.
+        if password != confirm_password:
+                raise ValueError("Passwords do not match!")
+        # Check if passwords.json exists
+        if not os.path.exists('passwords.json'):
+            # If passwords.json doesn't exist, initialize it with an empty list
+            data = []
+        else:
+            # Load existing data from passwords.json
+            try:
+                with open('passwords.json', 'r') as file:
+                    data = json.load(file)
+            except json.JSONDecodeError:
+                # Handle the case where passwords.json is empty or invalid JSON.
+                data = []
+        # Encrypt the password
+        encrypted_password = encrypt_password(cipher, password)
+        # Create a dictionary to store the website and password
+        password_entry = {'website': website, 'username':username,  'password': encrypted_password}
+        data.append(password_entry)
+        # Save the updated list back to passwords.json
+        with open('passwords.json', 'w') as file:
+            # Indent the json data for readability.
+            json.dump(data, file, indent=4)
+    except (Exception, json.JSONDecodeError) as err:
+        print(f"An error occurred while adding password: {err}")
+        raise err
 
 
 # Function to retrieve a saved password.
 def get_password(website):
-   # Check if passwords.json exists
-   if not os.path.exists('passwords.json'):
-       return None
-   # Load existing data from passwords.json
-   try:
-       with open('passwords.json', 'r') as file:
-           data = json.load(file)
-   except json.JSONDecodeError:
-       data = []
-   # Loop through all the websites and check if the requested website exists.
-   for entry in data:
-       if entry['website'] == website:
-           # Decrypt and return the password
-           username = entry['username']
-           decrypted_password = decrypt_password(cipher, entry['password'])
-           return [username, decrypted_password]
-    # Return None if the website was not found.
-   return None
+    try :
+        # Check if passwords.json exists
+        if not os.path.exists('passwords.json'):
+            return None
+        # Load existing data from passwords.json
+        try:
+            with open('passwords.json', 'r') as file:
+                data = json.load(file)
+        except json.JSONDecodeError:
+            data = []
+        # Loop through all the websites and check if the requested website exists.
+        for entry in data:
+            if entry['website'] == website:
+                # Decrypt and return the password
+                username = entry['username']
+                decrypted_password = decrypt_password(cipher, entry['password'])
+                return [username, decrypted_password]
+    except Exception as err:
+        print(f"An error occurred while getting password: {err}")
+        raise err
+
 
 
 def remove_buttons(buttons):
@@ -166,7 +176,7 @@ def handle_quit():
 
 
 # Function to handle the submit button click
-def handle_submit(center_frame, entry1, entry2, entry3, context, texts):
+def handle_submit(center_frame, entry1, entry2, entry3, entry4,  context, texts):
     print("User clicked button:", context)
     
     # Add your code here to handle the submit button click
@@ -204,11 +214,17 @@ def handle_submit(center_frame, entry1, entry2, entry3, context, texts):
             website = entry1.get()
             username = entry2.get()
             password = entry3.get()
+            confirm_password = entry4.get()
             try:
-                add_password(website,username, password)
+                add_password(website,username, password, confirm_password)
                 messagebox.showinfo(texts.title, "Password added successfully!")
-            except Exception:
-                messagebox.showerror(texts.title, "An error occurred while adding password!")
+            except (Exception, ValueError) as err:
+                print(f"An error occurred while adding password: {err}")
+                if isinstance(err, ValueError):
+                    messagebox.showerror(texts.title, "Passwords do not match!")
+                else:
+                    messagebox.showerror(texts.title, "An error occurred while adding password!")
+            
             # Existing code for handle_submit() function
             if messagebox.askyesno(texts.title, "Do you want to add another password?"):
                 # Show the add password view again
@@ -303,7 +319,7 @@ def show_view(center_frame, texts, view, website=None):
 
     
         # Create the submit button
-        submit_button = tk.Button(center_frame, text=texts.submit,height=2, width=10, command=lambda: handle_submit(center_frame, username_entry, password_entry,None,  view ,texts), cursor="hand2")
+        submit_button = tk.Button(center_frame, text=texts.submit,height=2, width=10, command=lambda: handle_submit(center_frame, username_entry, password_entry,None,None,  view ,texts), cursor="hand2")
         submit_button.grid(row=4, column=0, columnspan=2, padx=10, pady=5)
     
         # Quit button
@@ -377,7 +393,7 @@ def show_view(center_frame, texts, view, website=None):
         back_button.grid(row=4, column=0, padx=10, pady=10)
 
         # Create the submit button
-        submit_button = tk.Button(center_frame, text=texts.submit, command=lambda: handle_submit(center_frame, website_entry,username_entry, password_entry, texts.add_password, texts))
+        submit_button = tk.Button(center_frame, text=texts.submit, command=lambda: handle_submit(center_frame, website_entry,username_entry, password_entry, confirm_password_entry, texts.add_password, texts))
         submit_button.grid(row=4, column=1, columnspan=2, padx=10, pady=10)
 
 
@@ -401,7 +417,7 @@ def show_view(center_frame, texts, view, website=None):
         back_button.grid(row=2, column=0, padx=10, pady=10)
     
         # Create the submit button
-        submit_button = tk.Button(center_frame, text=texts.submit, command=lambda: handle_submit(center_frame, website_entry, None, None, texts.get_password, texts))
+        submit_button = tk.Button(center_frame, text=texts.submit, command=lambda: handle_submit(center_frame, website_entry, None, None,None, texts.get_password, texts))
         submit_button.grid(row=2, column=1, padx=10, pady=5)
         
     # Password view
@@ -454,6 +470,8 @@ def show_view(center_frame, texts, view, website=None):
     # Center the elements vertically and horizontally within the frame
     center_frame.grid_columnconfigure(0, weight=1)
     center_frame.grid_rowconfigure(1, weight=1)
+
+
 # Generate a secret key
 # Load or generate the encryption key.
 key_filename = 'encryption_key.key'
